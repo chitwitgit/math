@@ -5,7 +5,7 @@
     "chitwitgit (https://github.com/chitwitgit)"
   ],
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fork of @m2d/math with expanded LaTeX→OMML macro coverage for DOCX export. Plugin to convert mathematical expressions in Markdown (MDAST) to DOCX using LaTeX-style syntax.",
   "license": "MPL-2.0",
   "main": "./dist/index.js",
@@ -17,7 +17,7 @@
     "directory": "lib"
   },
   "bugs": "https://github.com/chitwitgit/math/issues",
-  "homepage": "https://github.com/chitwitgit/math/tree/feat/expand-latex-symbol-coverage/lib#readme",
+  "homepage": "https://github.com/chitwitgit/math/tree/chore/npm-publish/lib#readme",
   "publishConfig": {
     "access": "public"
   },
