@@ -19,6 +19,28 @@ const mapString = (docx: typeof DOCX, s: string): DOCX.MathRun => new docx.MathR
 const resolveLatexSymbol = (name: string): string | undefined =>
   KATEX_SYMBOL_OVERRIDES[name] ?? KATEX_SYMBOLS[name] ?? KATEX_ALIASES[name];
 
+const createMathNAry = (
+  docx: typeof DOCX,
+  accent: string,
+  limitLocationVal?: string,
+): DOCX.MathRun => {
+  class MathNAry extends docx.XmlComponent {
+    constructor() {
+      super("m:nary");
+      this.root.push(
+        docx.createMathNAryProperties({
+          accent,
+          hasSuperScript: false,
+          hasSubScript: false,
+          limitLocationVal,
+        }),
+      );
+      this.root.push(docx.createMathBase({ children: [] }));
+    }
+  }
+  return new MathNAry() as unknown as DOCX.MathRun;
+};
+
 /** convert group to Math */
 const mapGroup = (docx: typeof DOCX, nodes: latex.Node[]): DOCX.MathRun[] => {
   const group: DOCX.MathRun[] = [];
@@ -34,11 +56,13 @@ const mapGroup = (docx: typeof DOCX, nodes: latex.Node[]): DOCX.MathRun[] => {
 const mapMacro = (
   docx: typeof DOCX,
   node: latex.Macro,
-  runs: DOCX.MathRun[],
+  runs: DOCX.MathRun[] & { binomPending?: 0 | 1; binomFirst?: DOCX.MathRun[] },
 ): DOCX.MathRun[] | DOCX.MathRun | null => {
   let returnVal: DOCX.MathRun[] | DOCX.MathRun | null = null;
   switch (node.content) {
     case "newline":
+      returnVal = mapString(docx, " ");
+      break;
     case "\\":
       // line break
       return null;
@@ -150,6 +174,27 @@ const mapMacro = (
       docNode.isSum = 1;
       return docNode;
     }
+    case "prod":
+      returnVal = createMathNAry(docx, "∏");
+      break;
+    case "int":
+      returnVal = createMathNAry(docx, "∫", "subSup");
+      break;
+    case "oint":
+      returnVal = createMathNAry(docx, "∮", "subSup");
+      break;
+    case "bigcup":
+      returnVal = createMathNAry(docx, "⋃");
+      break;
+    case "bigcap":
+      returnVal = createMathNAry(docx, "⋂");
+      break;
+    case "bigoplus":
+      returnVal = createMathNAry(docx, "⊕");
+      break;
+    case "bigotimes":
+      returnVal = createMathNAry(docx, "⊗");
+      break;
     case "frac":
     case "tfrac":
     case "dfrac": {
@@ -162,6 +207,22 @@ const mapMacro = (
       }
       break;
     }
+    case "stackrel": {
+      const args = node.args ?? [];
+      if (args.length === 2 && hasCurlyBrackets(args[0]) && hasCurlyBrackets(args[1])) {
+        returnVal = [
+          docx.createMathLimitLocation({ value: "undOvr" }),
+          new docx.MathLimitUpper({
+            children: mapGroup(docx, args[1].content),
+            limit: mapGroup(docx, args[0].content),
+          }),
+        ];
+      }
+      break;
+    }
+    case "binom":
+      runs.binomPending = 0;
+      return [];
     case "sqrt": {
       const args = node.args ?? [];
       if (args.length === 1) {
@@ -183,11 +244,30 @@ const mapMacro = (
     case "left":
     case "right":
     case "vec":
+    case "boxed":
+    case "boldsymbol":
       return [];
     case "mathbf":
       return mapGroup(docx, node.args?.[0]?.content ?? []);
     default:
-      if (KATEX_ACCENTS[node.content]) {
+      if (node.content === "overline" || node.content === "widetilde") {
+        returnVal = docx.createMathAccentCharacter({
+          accent: node.content === "overline" ? "¯" : "~",
+        });
+      } else if (
+        node.content === "mathrm" ||
+        node.content === "mathit" ||
+        node.content === "textbf" ||
+        node.content === "textit" ||
+        node.content === "underline" ||
+        node.content === "overbrace" ||
+        node.content === "underbrace"
+      ) {
+        const args = node.args ?? [];
+        if (hasCurlyBrackets(args[0])) {
+          returnVal = mapGroup(docx, args[0].content);
+        }
+      } else if (KATEX_ACCENTS[node.content]) {
         returnVal = docx.createMathAccentCharacter({ accent: KATEX_ACCENTS[node.content] });
       } else if (KATEX_FUNCTIONS.has(node.content)) {
         returnVal = mapString(docx, node.content);
@@ -215,8 +295,30 @@ const mapMacro = (
 const mapNode = (
   docx: typeof DOCX,
   node: latex.Node,
-  runs: DOCX.MathRun[],
+  runs: DOCX.MathRun[] & { binomPending?: 0 | 1; binomFirst?: DOCX.MathRun[] },
 ): DOCX.MathRun[] | false => {
+  if (node.type === "group" && runs.binomPending !== undefined) {
+    const content = mapGroup(docx, node.content);
+    if (runs.binomPending === 0) {
+      runs.binomFirst = content;
+      runs.binomPending = 1;
+      return [];
+    }
+    delete runs.binomPending;
+    const numerator = runs.binomFirst ?? [];
+    delete runs.binomFirst;
+    return [
+      new docx.MathRoundBrackets({
+        children: [
+          new docx.MathFraction({
+            numerator,
+            denominator: content,
+          }),
+        ],
+      }),
+    ];
+  }
+
   let docxNodes: DOCX.MathRun[] = [];
   switch (node.type) {
     case "string":
@@ -266,7 +368,7 @@ export const parseLatex = (docx: typeof DOCX, value: string): DOCX.MathRun[][] =
   const latexNodes = parseMath(value);
 
   const paragraphs: DOCX.MathRun[][] = [[]];
-  let runs: DOCX.MathRun[] = paragraphs[0];
+  let runs: DOCX.MathRun[] & { binomPending?: 0 | 1; binomFirst?: DOCX.MathRun[] } = paragraphs[0];
 
   for (const node of latexNodes) {
     const res = mapNode(docx, node, runs);
