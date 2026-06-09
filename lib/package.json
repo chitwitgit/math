@@ -1,19 +1,31 @@
 {
-  "name": "@m2d/math",
+  "name": "@chitwitgit/m2d-math",
   "author": "Mayank Kumar Chaudhari (https://mayank-chaudhari.vercel.app)",
+  "contributors": [
+    "chitwitgit (https://github.com/chitwitgit)"
+  ],
   "private": false,
-  "version": "0.0.6",
-  "description": "Plugin to convert mathematical expressions in Markdown (MDAST) to DOCX using LaTeX-style syntax. Integrates seamlessly with mdast2docx.",
+  "version": "0.1.0",
+  "description": "Fork of @m2d/math with expanded LaTeX→OMML macro coverage for DOCX export. Plugin to convert mathematical expressions in Markdown (MDAST) to DOCX using LaTeX-style syntax.",
   "license": "MPL-2.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "repository": "github:md2docx/math",
-  "bugs": "https://github.com/md2docx/math/issues",
-  "homepage": "https://github.com/md2docx/math/#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chitwitgit/math.git",
+    "directory": "lib"
+  },
+  "bugs": "https://github.com/chitwitgit/math/issues",
+  "homepage": "https://github.com/chitwitgit/math/tree/feat/expand-latex-symbol-coverage/lib#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "files": [
-    "dist/**"
+    "dist/**",
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {
@@ -30,27 +42,8 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "test": "vitest run --coverage",
-    "generate:katex": "node --experimental-strip-types scripts/generate-katex-data.ts"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@testing-library/react": "^16.3.2",
-    "@types/node": "^25.6.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@unified-latex/unified-latex-types": "^1.8.4",
-    "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.5",
-    "docx": "^9.6.1",
-    "esbuild-plugin-rdi": "^0.0.0",
-    "jsdom": "^29.1.1",
-    "remark-parse": "^11.0.0",
-    "tsup": "^8.5.1",
-    "typescript": "^6.0.3",
-    "unified": "^11.0.5",
-    "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.1.5"
+    "generate:katex": "node --experimental-strip-types scripts/generate-katex-data.ts",
+    "prepack": "cp ../LICENSE ./LICENSE"
   },
   "dependencies": {
     "@m2d/core": "^1.7.1",
@@ -60,16 +53,6 @@
     "docx": "^9.3.0",
     "remark-math": "^6.0.0"
   },
-  "funding": [
-    {
-      "type": "github",
-      "url": "https://github.com/sponsors/md2docx"
-    },
-    {
-      "type": "github",
-      "url": "https://github.com/sponsors/mayank1513"
-    }
-  ],
   "keywords": [
     "math",
     "latex",
@@ -81,17 +64,12 @@
     "mdast",
     "docx",
     "ms-word",
+    "omml",
     "text-processing",
     "export",
     "document generator",
     "typescript",
     "remark",
-    "unified",
-    "open-source",
-    "seamless integration",
-    "automation",
-    "web-development",
-    "rich text",
-    "mayank1513"
+    "unified"
   ]
 }

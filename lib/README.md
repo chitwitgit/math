@@ -1,6 +1,9 @@
-# `@m2d/math` <img src="https://raw.githubusercontent.com/mayank1513/mayank1513/main/popper.png" height="40"/>
+# `@chitwitgit/m2d-math`
 
-[![test](https://github.com/md2docx/math/actions/workflows/test.yml/badge.svg)](https://github.com/md2docx/math/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/md2docx/math/graph/badge.svg)](https://codecov.io/gh/md2docx/math) [![Version](https://img.shields.io/npm/v/@m2d/math?color=green)](https://www.npmjs.com/package/@m2d/math) ![Downloads](https://img.shields.io/npm/d18m/@m2d/math) ![Bundle Size](https://img.shields.io/bundlephobia/minzip/@m2d/math)
+> **Fork of [`@m2d/math`](https://www.npmjs.com/package/@m2d/math)** with expanded LaTeX→OMML macro coverage for DOCX export.  
+> Upstream: [md2docx/math](https://github.com/md2docx/math) · License: **MPL-2.0**
+
+[![Version](https://img.shields.io/npm/v/@chitwitgit/m2d-math?color=green)](https://www.npmjs.com/package/@chitwitgit/m2d-math)
 
 > A plugin that transforms LaTeX-style math (inline and block) into DOCX-compatible equations using docx.
 
@@ -11,16 +14,30 @@
 ## 📦 Installation
 
 ```bash
-npm install @m2d/math
+npm install @chitwitgit/m2d-math
 ```
 
 ```bash
-pnpm add @m2d/math
+bun add @chitwitgit/m2d-math
 ```
 
 ```bash
-yarn add @m2d/math
+pnpm add @chitwitgit/m2d-math
 ```
+
+---
+
+## Usage
+
+Same API as `@m2d/math`:
+
+```ts
+import { mathPlugin, parseLatex } from "@chitwitgit/m2d-math";
+```
+
+---
+
+# `@m2d/math` <img src="https://raw.githubusercontent.com/mayank1513/mayank1513/main/popper.png" height="40"/>
 
 ---
 
@@ -115,7 +132,8 @@ If you find this useful:
 
 ## 🧾 License
 
-MIT © [Mayank Chaudhari](https://github.com/mayankchaudhari)
+**MPL-2.0** — derived from [@m2d/math](https://github.com/md2docx/math) by Mayank Kumar Chaudhari.  
+See [LICENSE](./LICENSE) in this package and the upstream [md2docx/math](https://github.com/md2docx/math) repository.
 
 ---
 
