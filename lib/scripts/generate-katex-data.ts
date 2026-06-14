@@ -26,6 +26,9 @@ const fetchKatexSource = async (path: string): Promise<string> => {
   return response.text();
 };
 
+const toJsonParseExport = (name: string, value: unknown, type: string): string =>
+  `export const ${name} = JSON.parse(${JSON.stringify(JSON.stringify(value))}) as ${type};`;
+
 const symbolMap: Record<string, string> = {};
 const aliasMap: Record<string, string> = {};
 const accentMap: Record<string, string> = {};
@@ -151,27 +154,29 @@ const generate = async (): Promise<void> => {
   if (overrideMap.neq) overrideMap.ne = overrideMap.neq;
   if (symbolMap["@cdots"]) overrideMap.cdots = symbolMap["@cdots"];
 
-  const symbolLines = Object.entries(symbolMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
-    .join("\n");
+  // Flatten symbol/alias/override tables (override > symbol > alias) for one lookup at runtime.
+  const lookupMap: Record<string, string> = { ...aliasMap, ...symbolMap, ...overrideMap };
 
   const sourceNote = `KaTeX v${KATEX_VERSION} — regenerate via \`${REGENERATE_CMD}\` (fetches from ${KATEX_BASE}).`;
+  const functions = [...fnSet].sort();
 
   writeFileSync(
-    join(ROOT, "src/katexSymbols.ts"),
-    `/** ${sourceNote} */\nexport const KATEX_SYMBOLS: Record<string, string> = {\n${symbolLines}\n};\n`,
+    join(ROOT, "src/katexData.ts"),
+    [
+      `/** ${sourceNote} */`,
+      toJsonParseExport("KATEX_SYMBOLS", lookupMap, "Record<string, string>"),
+      toJsonParseExport("KATEX_ACCENTS", accentMap, "Record<string, string>"),
+      `export const KATEX_FUNCTIONS = new Set<string>(${JSON.stringify(functions)});`,
+      "",
+    ].join("\n"),
   );
 
-  writeFileSync(
-    join(ROOT, "src/katexMeta.ts"),
-    `/** ${sourceNote} */\nexport const KATEX_ALIASES: Record<string, string> = ${JSON.stringify(aliasMap, null, 2)};\n\nexport const KATEX_ACCENTS: Record<string, string> = ${JSON.stringify(accentMap, null, 2)};\n\nexport const KATEX_FUNCTIONS = new Set<string>(${JSON.stringify([...fnSet].sort())});\n\n/** KaTeX macro-only symbols mapped to Unicode for Word OMML text runs. */\nexport const KATEX_SYMBOL_OVERRIDES: Record<string, string> = ${JSON.stringify(overrideMap, null, 2)};\n`,
-  );
-
-  console.log(`KATEX_SYMBOLS: ${Object.keys(symbolMap).length}`);
-  console.log(`KATEX_ALIASES: ${Object.keys(aliasMap).length}`);
+  console.log(`KATEX_SYMBOLS: ${Object.keys(lookupMap).length} (merged)`);
+  console.log(`  base symbols: ${Object.keys(symbolMap).length}`);
+  console.log(`  aliases: ${Object.keys(aliasMap).length}`);
+  console.log(`  overrides: ${Object.keys(overrideMap).length}`);
+  console.log(`KATEX_ACCENTS: ${Object.keys(accentMap).length}`);
   console.log(`KATEX_FUNCTIONS: ${fnSet.size}`);
-  console.log(`KATEX_SYMBOL_OVERRIDES: ${Object.keys(overrideMap).length}`);
 };
 
 generate().catch(error => {
